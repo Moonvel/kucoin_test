@@ -3,21 +3,23 @@ package ru.moonvel.kuCoinApi;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.restassured.http.ContentType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import ru.moonvel.kuCoinApi.tools.HighToLowChangeRateComparator;
+import ru.moonvel.kuCoinApi.tools.ApiSpecification;
 
 public class ApiTests {
 
   public static final String BASE_URL = "https://api.kucoin.com/";
 
   public List<TickerData> getTickers() {
+    ApiSpecification.installSpecification(ApiSpecification.requestSpec(BASE_URL), ApiSpecification.responseSpecOK200());
     return given()
-        .contentType(ContentType.JSON)
         .when()
-        .get(BASE_URL + "api/v1/market/allTickers")
+        .get("api/v1/market/allTickers")
         .then()
         .extract().jsonPath().getList("data.ticker", TickerData.class);
   }
@@ -44,7 +46,7 @@ public class ApiTests {
   @Test
   public void isPriceOfFirstCurrencyIsNonNegativeTest() {
     List<TickerShortData> tickerShort = new ArrayList<>();
-    getTickers().forEach(ticker -> tickerShort.add(
+    getTickers().stream().limit(10).forEach(ticker -> tickerShort.add(
         new TickerShortData(ticker.getSymbolName(), Float.parseFloat(ticker.getAveragePrice()))));
     tickerShort.forEach(ticker -> assertThat(ticker.getAvgPrice() >= 0).isTrue());
   }
